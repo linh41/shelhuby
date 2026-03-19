@@ -89,7 +89,6 @@ query GetBlobTransactions($addr: String!) {
       entry_function_id_str
       timestamp
       gas_unit_price
-      gas_used
     }
   }
 }`;
@@ -100,7 +99,6 @@ interface RawBlobTx {
     entry_function_id_str: string;
     timestamp: string;
     gas_unit_price: number;
-    gas_used?: number;
   } | null;
 }
 
