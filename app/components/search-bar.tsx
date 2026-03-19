@@ -35,8 +35,8 @@ export function SearchBar({ onSearch, loading = false }: SearchBarProps) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-2">
-      <div className="flex gap-2">
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-2">
+      <div className="flex gap-4">
         <input
           type="text"
           value={value}
@@ -44,7 +44,7 @@ export function SearchBar({ onSearch, loading = false }: SearchBarProps) {
           onKeyDown={handleKeyDown}
           placeholder="Search wallet address (0x...)"
           disabled={loading}
-          className="flex-1 rounded-xl px-4 py-3 text-sm outline-none transition-colors disabled:opacity-50"
+          className="flex-1 rounded-2xl px-7 py-5 text-lg outline-none transition-colors disabled:opacity-50"
           style={{
             background: 'rgba(26,26,26,0.06)',
             border: '1.5px solid var(--border)',
@@ -54,13 +54,13 @@ export function SearchBar({ onSearch, loading = false }: SearchBarProps) {
         <button
           onClick={submit}
           disabled={loading}
-          className="flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="flex items-center gap-3 rounded-2xl px-8 py-5 text-lg font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
           style={{ background: 'var(--text-primary)', color: '#fff' }}
         >
           {loading ? (
-            <span className="inline-block h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+            <span className="inline-block h-6 w-6 rounded-full border-2 border-white border-t-transparent animate-spin" />
           ) : (
-            <Search size={16} />
+            <Search size={24} />
           )}
           Explore
         </button>

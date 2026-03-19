@@ -121,17 +121,17 @@ function DashboardContent() {
         {/* Search bar — full-width on mobile, centered with max-width on md+ */}
         <div className="flex-1 flex justify-center order-last md:order-none w-full md:w-auto">
           <div
-            className="flex items-center gap-2 rounded-2xl px-3.5 h-8 w-full md:max-w-[360px]"
+            className="flex items-center gap-3 rounded-2xl px-5 h-12 w-full md:max-w-[520px]"
             style={{ background: 'var(--card-elevated)', border: '1px solid var(--page-bg)' }}
           >
-            <Search size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+            <Search size={18} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search wallet address (0x...)"
-              className="flex-1 bg-transparent text-[13px] outline-none"
+              className="flex-1 bg-transparent text-base outline-none"
               style={{ color: 'var(--text-primary)' }}
             />
           </div>
@@ -139,14 +139,14 @@ function DashboardContent() {
 
         {/* Network pill switch — matches .pen pillSwitch */}
         <div
-          className="flex rounded-[14px] p-0.5 h-7 shrink-0"
+          className="flex rounded-[16px] p-1 h-10 shrink-0"
           style={{ background: 'rgba(245,240,235,0.05)' }}
         >
           {(['shelbynet', 'testnet'] as NetworkId[]).map((net) => (
             <button
               key={net}
               onClick={() => handleNetworkChange(net)}
-              className="rounded-xl px-3 text-xs font-medium press-feedback h-full"
+              className="rounded-xl px-4 text-sm font-medium press-feedback h-full"
               style={
                 network === net
                   ? { background: 'var(--text-primary)', color: 'var(--text-tertiary)', transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.1s ease' }

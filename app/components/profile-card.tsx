@@ -8,6 +8,7 @@ import { classifyBlob } from '@/app/lib/classifier';
 import { Skeleton } from '@/app/components/ui/skeleton';
 import { CopyButton } from '@/app/components/ui/copy-button';
 import { StorageScoreRing } from '@/app/components/storage-score-ring';
+import { HoloBalanceCard } from '@/app/components/shelbyusd-balance-card';
 
 interface ProfileCardProps {
   profile: WalletProfile | null;
@@ -157,28 +158,28 @@ export function ProfileCard({ profile, blobs = [], network = 'shelbynet', loadin
     >
       {/* Header row: address + network badge + score ring */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2.5">
-            <span className="text-base font-normal" style={{ color: 'var(--text-primary)' }}>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
               {truncateAddress(profile.address)}
             </span>
             <CopyButton text={profile.address} />
           </div>
           <span
-            className="inline-flex items-center gap-1.5 w-fit rounded-xl px-2.5 py-1 text-xs font-medium"
+            className="inline-flex items-center gap-2 w-fit rounded-xl px-3.5 py-1.5 text-sm font-medium"
             style={{ background: 'var(--accent)', color: '#fff' }}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+            <span className="h-2 w-2 rounded-full bg-green-400" />
             {networkName}
           </span>
         </div>
-        <StorageScoreRing score={profile.storageScore} size={88} />
+        <StorageScoreRing score={profile.storageScore} size={140} />
       </div>
 
       {/* Metrics grid — 4 columns top, 3 columns bottom */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <MetricCard label="ShelbyUSD Balance" value={formatCurrency(profile.shelbyUsdBalance, 'SUSD')} />
-        <MetricCard label="APT Balance" value={formatCurrency(profile.aptBalance, 'APT')} />
+        <HoloBalanceCard label="ShelbyUSD Balance" value={formatCurrency(profile.shelbyUsdBalance, 'SUSD')} logoSrc="/shelby-logo.jpg" logoAlt="ShelbyUSD" />
+        <HoloBalanceCard label="APT Balance" value={formatCurrency(profile.aptBalance, 'APT')} logoSrc="/aptos-logo.png" logoAlt="Aptos" glowColor="rgba(76, 175, 80, 0.5)" />
         <MetricCard label="Total Blobs" value={profile.totalBlobs.toLocaleString()} />
         <MetricCard label="Total Storage" value={formatBytes(profile.totalStorageBytes)} />
       </div>

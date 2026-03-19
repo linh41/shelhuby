@@ -1,0 +1,169 @@
+/* Holographic tilt card for ShelbyUSD balance — adapted from reactbits.dev/components/profile-card */
+.susd-wrapper {
+  perspective: 800px;
+  transform: translate3d(0, 0, 0.1px);
+  position: relative;
+  touch-action: none;
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --pointer-from-center: 0;
+  --pointer-from-top: 0.5;
+  --pointer-from-left: 0.5;
+  --card-opacity: 0;
+  --rotate-x: 0deg;
+  --rotate-y: 0deg;
+  --background-x: 50%;
+  --background-y: 50%;
+}
+
+/* Behind glow */
+.susd-behind {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--pointer-x) var(--pointer-y),
+    var(--glow-accent, rgba(243, 156, 18, 0.5)) 0%,
+    transparent 50%
+  );
+  filter: blur(40px) saturate(1.2);
+  opacity: calc(0.7 * var(--card-opacity));
+  transition: opacity 200ms ease;
+}
+
+.susd-wrapper:hover { --card-opacity: 1; }
+
+/* Main card */
+.susd-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(30, 20, 10, 0.95);
+  box-shadow:
+    rgba(0, 0, 0, 0.3) calc((var(--pointer-from-left) * 8px) - 3px)
+    calc((var(--pointer-from-top) * 12px) - 4px) 16px -4px;
+  transition: transform 0.8s ease;
+  transform: translateZ(0) rotateX(0deg) rotateY(0deg);
+  backface-visibility: hidden;
+}
+
+.susd-card:hover {
+  transition: none;
+  transform: translateZ(0) rotateX(var(--rotate-y)) rotateY(var(--rotate-x));
+}
+
+.susd-wrapper.entering .susd-card {
+  transition: transform 180ms ease-out;
+}
+
+/* Shine overlay — holographic rainbow effect */
+.susd-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: color-dodge;
+  filter: brightness(0.5) contrast(1.2) saturate(0.3) opacity(0.4);
+  transition: filter 0.8s ease;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      hsl(35, 100%, 65%) 5%,
+      hsl(50, 100%, 70%) 10%,
+      hsl(25, 100%, 60%) 15%,
+      hsl(340, 80%, 65%) 20%,
+      hsl(280, 70%, 60%) 25%,
+      hsl(35, 100%, 65%) 30%
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      #1a0e05 0%,
+      hsl(35, 30%, 55%) 3.8%,
+      hsl(40, 40%, 60%) 4.5%,
+      hsl(35, 30%, 55%) 5.2%,
+      #1a0e05 10%,
+      #1a0e05 12%
+    ),
+    radial-gradient(
+      farthest-corner circle at var(--pointer-x) var(--pointer-y),
+      hsla(0, 0%, 0%, 0.1) 12%,
+      hsla(0, 0%, 0%, 0.15) 20%,
+      hsla(0, 0%, 0%, 0.25) 120%
+    );
+  background-position:
+    0 var(--background-y),
+    var(--background-x) var(--background-y),
+    center;
+  background-blend-mode: color, hard-light;
+  background-size: 500% 500%, 300% 300%, 200% 200%;
+  animation: susd-holo 18s linear infinite;
+}
+
+.susd-card:hover .susd-shine {
+  filter: brightness(0.7) contrast(1.4) saturate(0.5);
+  animation-play-state: paused;
+}
+
+/* Glare overlay */
+.susd-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: overlay;
+  filter: brightness(0.7) contrast(1.1);
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsl(35, 40%, 75%) 12%,
+    hsla(30, 30%, 25%, 0.6) 90%
+  );
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.susd-card:hover .susd-glare { opacity: 1; }
+
+/* Content layer */
+.susd-content {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+/* Logo */
+.susd-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(243, 156, 18, 0.3));
+}
+
+/* Text */
+.susd-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+  color: rgba(168, 152, 136, 0.9);
+}
+
+.susd-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #F5F0EB;
+}
+
+@keyframes susd-holo {
+  0% { background-position: 0 var(--background-y), 0 0, center; }
+  100% { background-position: 0 var(--background-y), 90% 90%, center; }
+}
