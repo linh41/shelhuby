@@ -139,22 +139,21 @@ export function ExpiryAlerts({ blobs, onBlobClick }: ExpiryAlertsProps) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <TriangleAlert size={18} style={{ color: 'var(--accent)' }} />
-          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <span className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
             Expiry Alerts
           </span>
           {criticalCount > 0 && (
             <span
-              className="rounded-full px-2 py-0.5 text-xs font-semibold"
-              style={{ background: 'rgba(231,76,60,0.15)', color: 'var(--danger)' }}
+              className="rounded-[10px] px-2 py-0.5 text-xs font-semibold"
+              style={{ background: 'var(--danger)', color: '#fff' }}
             >
               {criticalCount} Critical
             </span>
           )}
           {warningCount > 0 && (
             <span
-              className="rounded-full px-2 py-0.5 text-xs font-semibold"
-              style={{ background: 'rgba(243,156,18,0.15)', color: 'var(--warning)' }}
+              className="rounded-[10px] px-2 py-0.5 text-xs font-semibold"
+              style={{ background: 'var(--warning)', color: '#fff' }}
             >
               {warningCount} Warning
             </span>

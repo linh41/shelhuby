@@ -89,6 +89,7 @@ query GetBlobTransactions($addr: String!) {
       entry_function_id_str
       timestamp
       gas_unit_price
+      gas_used
     }
   }
 }`;
@@ -99,6 +100,7 @@ interface RawBlobTx {
     entry_function_id_str: string;
     timestamp: string;
     gas_unit_price: number;
+    gas_used?: number;
   } | null;
 }
 
@@ -127,28 +129,52 @@ async function fetchTxDetails(version: number, network: NetworkId): Promise<Full
   }
 }
 
-// Parse register_multiple_blobs payload:
-// args[0]: string[] blob names
-// args[1]: expiry timestamp (microseconds)
-// args[2]: string[] merkle roots
-// args[3]: number[] encoding params
-// args[4]: string[] sizes (bytes)
+// Parse register_multiple_blobs payload.
+// Supported layouts (Shelby protocol versions):
+//   v1 (5 args): names[], expiry, merkleRoots[], encodingParams[], sizes[]
+//   v2 (6 args): names[], expiry, merkleRoots[], encodingParams[], sizes[], extra
+// We detect the layout by inspecting arg types rather than assuming fixed positions.
 function parseBlobsFromPayload(
   tx: FullTxResponse,
   address: string
 ): BlobMetadata[] {
   const args = tx.payload?.arguments;
-  if (!args || args.length < 5) return [];
+  if (!Array.isArray(args) || args.length < 4) return [];
 
-  const names = args[0] as string[];
-  const expiryMicro = Number(args[1]);
-  const merkleRoots = args[2] as string[];
-  const sizes = args[4] as string[];
+  // Find the names array: first arg that is a string[]
+  // The Aptos REST API serializes Move string[] as a JS string[] directly.
+  let names: string[] = [];
+  let expiryMicro = 0;
+  let merkleRoots: string[] = [];
+  let sizes: string[] = [];
 
-  // REST API returns timestamp in microseconds
-  const uploadTs = Math.floor(Number(tx.timestamp) / 1e6);
-  // Expiry: microseconds → seconds
-  const expiryTs = expiryMicro > 1e15 ? Math.floor(expiryMicro / 1e6) : expiryMicro;
+  // Standard layout: args[0]=names, args[1]=expiry, args[2]=merkleRoots, args[3]=encodings, args[4]=sizes
+  // args[0][0] may be undefined for empty array — treat any string[] (including empty) as standard layout
+  if (Array.isArray(args[0]) && (args[0].length === 0 || typeof args[0][0] === 'string')) {
+    names = args[0] as string[];
+    expiryMicro = Number(args[1]);
+    merkleRoots = Array.isArray(args[2]) ? (args[2] as string[]) : [];
+    // args[3] = encodingParams (skip)
+    sizes = Array.isArray(args[4]) ? (args[4] as string[]) : [];
+  } else if (typeof args[0] === 'string' && args[0].startsWith('0x')) {
+    // Alternate layout: single blob where args[0]=name, args[1]=expiry, args[2]=merkleRoot, args[3]=size
+    // (some older register_blob calls)
+    names = [args[0] as string];
+    expiryMicro = Number(args[1]);
+    merkleRoots = [args[2] as string ?? ''];
+    sizes = [String(args[args.length - 1] ?? '0')];
+  }
+
+  if (names.length === 0) return [];
+
+  // REST API returns timestamp in microseconds as a numeric string
+  const uploadTsUs = Number(tx.timestamp);
+  // Convert microseconds → Unix seconds
+  const uploadTs = uploadTsUs > 1e12 ? Math.floor(uploadTsUs / 1e6) : uploadTsUs;
+
+  // Expiry: on-chain value is microseconds; convert → seconds for consistency
+  const expiryTs = expiryMicro > 1e12 ? Math.floor(expiryMicro / 1e6) : expiryMicro;
+
   const gasUsed = Number(tx.gas_used ?? 0);
   const gasPrice = Number(tx.gas_unit_price ?? 0);
   const totalGas = toDecimal(gasUsed * gasPrice, APT_DECIMALS);
@@ -183,32 +209,29 @@ export async function fetchBlobEvents(
   address: string,
   network: NetworkId
 ): Promise<BlobMetadata[]> {
-  try {
-    // Step 1: Get blob transaction versions via GraphQL
-    const data = await queryIndexer<{ account_transactions: RawBlobTx[] }>(
-      network, BLOB_TX_QUERY, { addr: address }
+  // Step 1: Get blob transaction versions via GraphQL — let errors propagate
+  const data = await queryIndexer<{ account_transactions: RawBlobTx[] }>(
+    network, BLOB_TX_QUERY, { addr: address }
+  );
+  const txVersions = (data?.account_transactions ?? [])
+    .map(t => t.transaction_version);
+
+  if (txVersions.length === 0) return [];
+
+  // Step 2: Fetch full TX payloads in parallel (batch of 10 at a time)
+  // Individual TX fetches are best-effort — don't fail the whole batch if one 404s
+  const blobs: BlobMetadata[] = [];
+  const batchSize = 10;
+  for (let i = 0; i < txVersions.length; i += batchSize) {
+    const batch = txVersions.slice(i, i + batchSize);
+    const txDetails = await Promise.all(
+      batch.map(v => fetchTxDetails(v, network))
     );
-    const txVersions = (data?.account_transactions ?? [])
-      .map(t => t.transaction_version);
-
-    if (txVersions.length === 0) return [];
-
-    // Step 2: Fetch full TX payloads in parallel (batch of 10 at a time)
-    const blobs: BlobMetadata[] = [];
-    const batchSize = 10;
-    for (let i = 0; i < txVersions.length; i += batchSize) {
-      const batch = txVersions.slice(i, i + batchSize);
-      const txDetails = await Promise.all(
-        batch.map(v => fetchTxDetails(v, network))
-      );
-      for (const tx of txDetails) {
-        if (tx) blobs.push(...parseBlobsFromPayload(tx, address));
-      }
+    for (const tx of txDetails) {
+      if (tx) blobs.push(...parseBlobsFromPayload(tx, address));
     }
-    return blobs;
-  } catch {
-    return [];
   }
+  return blobs;
 }
 
 // ── Cost History Aggregation ────────────────────────────────────────────────

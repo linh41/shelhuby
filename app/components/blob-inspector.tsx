@@ -202,13 +202,13 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
           {/* Divider */}
           <div style={{ height: 1, background: '#5A4838' }} />
 
-          {/* Action buttons — matches .pen: pink Open Blob, elevated others */}
-          <div className="flex flex-col gap-2.5">
+          {/* Action buttons — matches .pen: horizontal row */}
+          <div className="flex gap-2.5">
             <a
               href={blobUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-bold transition-opacity hover:opacity-80"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-bold transition-opacity hover:opacity-80"
               style={{ background: 'var(--accent)', color: '#fff', height: 42 }}
             >
               <ExternalLink size={14} />
@@ -218,7 +218,7 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
               href={explorerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-medium transition-colors hover:opacity-70"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-medium transition-colors hover:opacity-70"
               style={{
                 background: 'var(--card-elevated)',
                 border: '1px solid #5A4838',
@@ -233,7 +233,7 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
               href={blobUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-medium transition-colors hover:opacity-70"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-medium transition-colors hover:opacity-70"
               style={{
                 background: 'var(--card-elevated)',
                 border: '1px solid #5A4838',

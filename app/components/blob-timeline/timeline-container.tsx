@@ -101,7 +101,7 @@ export function TimelineContainer({ blobs, network, onBlobClick }: TimelineConta
 
         {/* Mode toggle — matches .pen toggle */}
         <div
-          className="flex items-center gap-0.5 rounded-lg p-0.5"
+          className="flex items-center gap-0.5 rounded-lg p-[3px]"
           style={{ background: 'var(--card-elevated)' }}
         >
           {(['heatmap', 'list'] as ViewMode[]).map((m) => (

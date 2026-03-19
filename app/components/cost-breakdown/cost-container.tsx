@@ -47,11 +47,11 @@ export function CostContainer({
     >
       {/* Section title */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
           Cost Breakdown
         </h2>
-        <span className="text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-tertiary)' }}>
-          Last 90 Days
+        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          Last 60 days
         </span>
       </div>
 

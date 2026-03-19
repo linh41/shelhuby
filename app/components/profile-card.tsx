@@ -41,7 +41,7 @@ function ProfileSkeleton() {
 function MetricCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div
-      className="flex flex-col gap-1 rounded-lg px-4 py-4"
+      className="flex flex-col gap-1 rounded-lg py-4 px-5"
       style={{ background: 'rgba(245,240,235,0.03)' }}
     >
       <span

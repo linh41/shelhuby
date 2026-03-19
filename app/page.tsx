@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { type NetworkId } from '@/app/types';
 import { NetworkSwitcher } from '@/app/components/network-switcher';
 
-const DEMO_ADDRESS = '0x1a8b4c2d9e3f7a1b5c8d2e6f9a3b7c1d4e8f2a9b';
 
 function isValidAddress(addr: string): boolean {
   return addr.startsWith('0x') && /^0x[0-9a-fA-F]+$/.test(addr) && addr.length > 10;
@@ -35,34 +34,17 @@ export default function LandingPage() {
     if (e.key === 'Enter') handleExplore();
   }
 
-  function handleDemoWallet() {
-    setAddress(DEMO_ADDRESS);
-    setError('');
-    router.push(`/dashboard?address=${encodeURIComponent(DEMO_ADDRESS)}&network=${network}`);
-  }
 
   return (
     <main
-      className="min-h-screen flex flex-col relative overflow-hidden"
+      className="min-h-screen flex flex-col relative"
       style={{ background: 'var(--page-bg)', padding: 'var(--bento-gap)' }}
     >
-      {/* Decorative diagonal stripes */}
-      <div
-        className="absolute rounded-lg opacity-[0.12]"
-        style={{ width: 400, height: 80, background: 'var(--accent)', transform: 'rotate(30deg)', top: 50, left: -80 }}
-      />
-      <div
-        className="absolute rounded-lg opacity-[0.10]"
-        style={{ width: 500, height: 90, background: 'var(--accent)', transform: 'rotate(-28deg)', bottom: 50, right: -100 }}
-      />
-      <div
-        className="absolute rounded-lg opacity-[0.08]"
-        style={{ width: 350, height: 70, background: 'var(--accent)', transform: 'rotate(32deg)', top: -30, right: -50 }}
-      />
-      <div
-        className="absolute rounded-lg opacity-[0.14]"
-        style={{ width: 300, height: 60, background: 'var(--accent)', transform: 'rotate(-30deg)', bottom: 100, left: -50 }}
-      />
+      {/* Decorative pink stripes */}
+      <img src="/stripe.svg" alt="" className="absolute z-[1] pointer-events-none" style={{ top: 30, left: -40, width: 400, opacity: 0.12, transform: 'rotate(30deg)' }} />
+      <img src="/stripe.svg" alt="" className="absolute z-[1] pointer-events-none" style={{ top: 0, right: 0, width: 350, opacity: 0.08, transform: 'rotate(32deg)' }} />
+      <img src="/stripe.svg" alt="" className="absolute z-[1] pointer-events-none" style={{ bottom: 80, left: -20, width: 300, opacity: 0.14, transform: 'rotate(-30deg)' }} />
+      <img src="/stripe.svg" alt="" className="absolute z-[1] pointer-events-none" style={{ bottom: 30, right: -50, width: 500, opacity: 0.10, transform: 'rotate(-28deg)' }} />
 
       {/* Header */}
       <header
@@ -86,7 +68,7 @@ export default function LandingPage() {
         style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius-lg)', minHeight: 560 }}
       >
         {/* Left: 60% */}
-        <div className="flex-[3] flex flex-col justify-center px-10 py-14 gap-6 md:gap-8" style={{ padding: '56px 48px' }}>
+        <div className="flex-[3] flex flex-col justify-center gap-6" style={{ padding: '48px 56px' }}>
           {/* Label */}
           <span
             className="text-xs font-medium uppercase tracking-[2px]"
@@ -140,16 +122,6 @@ export default function LandingPage() {
             )}
           </div>
 
-          {/* Demo wallet link */}
-          <div>
-            <button
-              onClick={handleDemoWallet}
-              className="text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: 'var(--accent-line)' }}
-            >
-              Try demo wallet →  <span className="font-mono">{DEMO_ADDRESS.slice(0, 6)}...{DEMO_ADDRESS.slice(-4)}</span>
-            </button>
-          </div>
         </div>
 
         {/* Right: 40% — mesh gradient panel with decorative cards */}
@@ -166,8 +138,8 @@ export default function LandingPage() {
               width: 280, height: 370,
               background: 'var(--accent)',
               transform: 'rotate(12deg)',
-              top: '18%', left: '15%',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+              top: 'calc(50% - 210px)', left: 'calc(50% - 180px)',
+              boxShadow: '0 8px 32px rgba(255,105,180,0.3)',
             }}
           />
           {/* Back card 2 — deep pink */}
@@ -177,8 +149,8 @@ export default function LandingPage() {
               width: 280, height: 370,
               background: 'var(--accent-deep)',
               transform: 'rotate(-7deg)',
-              top: '20%', left: '18%',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+              top: 'calc(50% - 200px)', left: 'calc(50% - 160px)',
+              boxShadow: '0 8px 24px rgba(204,77,140,0.25)',
             }}
           />
           {/* Main floating card */}
@@ -188,22 +160,23 @@ export default function LandingPage() {
               width: 280, height: 370,
               background: 'var(--card-elevated)',
               transform: 'rotate(2deg)',
-              top: '22%', left: '22%',
-              boxShadow: '0 14px 36px rgba(0,0,0,0.08)',
+              top: 'calc(50% - 185px)', left: 'calc(50% - 140px)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 8px 20px rgba(255,105,180,0.15)',
+              animation: 'float 4s ease-in-out infinite',
             }}
           >
-            {/* Avatar placeholder */}
-            <div
-              className="w-full flex-1"
-              style={{
-                background: 'linear-gradient(180deg, #FF69B440 0%, var(--card-elevated) 100%)',
-                minHeight: 200,
-              }}
-            />
+            {/* Avatar image */}
+            <div className="w-full flex-1 relative overflow-hidden" style={{ minHeight: 200 }}>
+              <img
+                src="/linhava.jpg"
+                alt="LinhLinh avatar"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
             {/* Name bar */}
             <div className="flex flex-col items-center justify-center gap-1 px-3 py-5">
               <span className="text-[22px] font-bold" style={{ color: 'var(--text-primary)' }}>LinhLinh</span>
-              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>from @linh41 with love</span>
+              <a href="https://github.com/linh41" target="_blank" rel="noopener noreferrer" className="text-[11px] hover:opacity-70 transition-opacity" style={{ color: 'var(--text-tertiary)' }}>from @linh41 with love</a>
             </div>
           </div>
 
@@ -213,6 +186,12 @@ export default function LandingPage() {
           <div className="absolute rounded-full opacity-35" style={{ width: 18, height: 18, background: 'var(--accent-dark)', bottom: '10%', right: '8%' }} />
         </div>
       </div>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: rotate(2deg) translateY(0); }
+          50% { transform: rotate(2deg) translateY(-14px); }
+        }
+      `}</style>
     </main>
   );
 }

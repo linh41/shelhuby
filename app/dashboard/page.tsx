@@ -52,18 +52,18 @@ function DashboardContent() {
       className="min-h-screen flex flex-col relative overflow-hidden"
       style={{ background: 'var(--page-bg)', padding: 'var(--bento-gap)', gap: 'var(--bento-gap)' }}
     >
-      {/* Decorative diagonal stripes */}
-      <div className="absolute rounded-lg opacity-[0.08]" style={{ width: 600, height: 120, background: 'var(--accent)', transform: 'rotate(30deg)', top: 30, left: -80 }} />
-      <div className="absolute rounded-lg opacity-[0.10]" style={{ width: 500, height: 100, background: 'var(--accent)', transform: 'rotate(-28deg)', top: -30, right: -50 }} />
-      <div className="absolute rounded-lg opacity-[0.06]" style={{ width: 800, height: 140, background: 'var(--accent)', transform: 'rotate(-32deg)', top: 500, left: -150 }} />
-      <div className="absolute rounded-lg opacity-[0.12]" style={{ width: 700, height: 110, background: 'var(--accent)', transform: 'rotate(25deg)', bottom: 100, right: -100 }} />
-      <div className="absolute rounded-lg opacity-[0.07]" style={{ width: 550, height: 120, background: 'var(--accent)', transform: 'rotate(30deg)', bottom: -50, left: -50 }} />
-      <div className="absolute rounded-lg opacity-[0.09]" style={{ width: 500, height: 100, background: 'var(--accent)', transform: 'rotate(-30deg)', bottom: -50, right: 0 }} />
+      {/* Decorative blurry pink shapes */}
+      <div className="absolute opacity-[0.08]" style={{ width: 600, height: 120, background: 'var(--accent)', transform: 'rotate(30deg)', top: 30, left: -80, filter: 'blur(40px)', borderRadius: 60 }} />
+      <div className="absolute opacity-[0.10]" style={{ width: 500, height: 100, background: 'var(--accent)', transform: 'rotate(-28deg)', top: -30, right: -50, filter: 'blur(40px)', borderRadius: 50 }} />
+      <div className="absolute opacity-[0.06]" style={{ width: 800, height: 140, background: 'var(--accent)', transform: 'rotate(-32deg)', top: 500, left: -150, filter: 'blur(40px)', borderRadius: 70 }} />
+      <div className="absolute opacity-[0.12]" style={{ width: 700, height: 110, background: 'var(--accent)', transform: 'rotate(25deg)', bottom: 100, right: -100, filter: 'blur(40px)', borderRadius: 55 }} />
+      <div className="absolute opacity-[0.07]" style={{ width: 550, height: 120, background: 'var(--accent)', transform: 'rotate(30deg)', bottom: -50, left: -50, filter: 'blur(40px)', borderRadius: 60 }} />
+      <div className="absolute opacity-[0.09]" style={{ width: 500, height: 100, background: 'var(--accent)', transform: 'rotate(-30deg)', bottom: -50, right: 0, filter: 'blur(40px)', borderRadius: 50 }} />
 
       {/* Header bar */}
       <header
-        className="relative z-10 flex items-center gap-4 px-4 py-2.5 rounded-2xl"
-        style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius)' }}
+        className="relative z-10 flex items-center gap-4 rounded-2xl"
+        style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius)', padding: '16px 48px' }}
       >
         <button
           onClick={() => router.push('/')}
@@ -74,30 +74,21 @@ function DashboardContent() {
         </button>
 
         {/* Centered search bar */}
-        <div className="flex-1 flex justify-center px-2">
+        <div className="flex-1 flex justify-center">
           <div
-            className="flex items-center gap-2 rounded-2xl px-3.5 py-1.5 w-full max-w-[360px]"
+            className="flex items-center gap-2 rounded-2xl px-3.5 h-8 w-full max-w-[360px]"
             style={{ background: 'var(--card-elevated)', border: '1px solid var(--page-bg)' }}
           >
-            <Search size={13} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+            <Search size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search wallet address (0x...)"
-              className="flex-1 bg-transparent text-xs outline-none"
+              className="flex-1 bg-transparent text-[13px] outline-none"
               style={{ color: 'var(--text-primary)' }}
             />
-            {searchInput && (
-              <button
-                onClick={handleSearch}
-                className="text-xs font-medium px-2 py-0.5 rounded-full transition-colors hover:opacity-80"
-                style={{ background: 'var(--accent)', color: '#fff' }}
-              >
-                Go
-              </button>
-            )}
           </div>
         </div>
 
