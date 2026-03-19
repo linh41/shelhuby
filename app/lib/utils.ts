@@ -4,6 +4,13 @@ import { NETWORKS } from '@/app/lib/networks';
 
 // ── Address ───────────────────────────────────────────────────────────────────
 
+// Pad Aptos address to full 66-char format (0x + 64 hex digits)
+export function padAddress(addr: string): string {
+  if (!addr) return addr;
+  const hex = addr.startsWith('0x') ? addr.slice(2) : addr;
+  return '0x' + hex.padStart(64, '0');
+}
+
 export function truncateAddress(addr: string): string {
   if (!addr || addr.length < 12) return addr ?? '';
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;

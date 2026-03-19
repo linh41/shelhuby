@@ -97,3 +97,10 @@ body {
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
+
+/* Blob inspector: full-screen on mobile (no left radius) */
+@media (max-width: 767px) {
+  .blob-inspector-panel {
+    border-radius: 0 !important;
+  }
+}

@@ -1,6 +1,7 @@
 // API module for Aptos Indexer (GraphQL) + Fullnode REST — fetches balances and blob data
 import { type NetworkId, type BlobMetadata, type CostDataPoint } from '@/app/types';
 import { NETWORKS, SHELBY_USD_ASSET, APT_ASSET } from './networks';
+import { padAddress } from './utils';
 
 const APT_DECIMALS = 8;
 const SHELBY_USD_DECIMALS = 6;
@@ -50,7 +51,7 @@ export async function fetchWalletBalances(
 ): Promise<{ aptBalance: number; shelbyUsdBalance: number }> {
   try {
     const data = await queryIndexer<{ current_fungible_asset_balances: RawBalance[] }>(
-      network, BALANCES_QUERY, { addr: address }
+      network, BALANCES_QUERY, { addr: padAddress(address) }
     );
     const balances = data?.current_fungible_asset_balances ?? [];
     let aptBalance = 0;
@@ -72,13 +73,14 @@ export async function fetchWalletBalances(
 // ── Blob Transactions ────────────────────────────────────────────────────────
 // Strategy: find blob upload TXs via GraphQL, then fetch full payload via REST
 
+// Match both register_blob (single) and register_multiple_blobs
 const BLOB_TX_QUERY = `
 query GetBlobTransactions($addr: String!) {
   account_transactions(
     where: {
       account_address: { _eq: $addr }
       user_transaction: {
-        entry_function_id_str: { _like: "%register_multiple_blobs%" }
+        entry_function_id_str: { _like: "%register%blob%" }
       }
     }
     order_by: { transaction_version: desc }
@@ -104,6 +106,7 @@ interface RawBlobTx {
 
 // Fetch full TX details from Aptos REST API to get payload arguments
 interface TxPayload {
+  function?: string;
   arguments: unknown[];
 }
 
@@ -127,11 +130,10 @@ async function fetchTxDetails(version: number, network: NetworkId): Promise<Full
   }
 }
 
-// Parse register_multiple_blobs payload.
-// Supported layouts (Shelby protocol versions):
-//   v1 (5 args): names[], expiry, merkleRoots[], encodingParams[], sizes[]
-//   v2 (6 args): names[], expiry, merkleRoots[], encodingParams[], sizes[], extra
-// We detect the layout by inspecting arg types rather than assuming fixed positions.
+// Parse register_blob / register_multiple_blobs payload.
+// Layouts:
+//   register_multiple_blobs: args[0]=names[], args[1]=expiry, args[2]=merkleRoots[], args[3]=encodings[], args[4]=sizes[]
+//   register_blob (single):  args[0]=name,    args[1]=expiry, args[2]=merkleRoot,    args[3]=encoding,   args[4]=size
 function parseBlobsFromPayload(
   tx: FullTxResponse,
   address: string
@@ -139,28 +141,25 @@ function parseBlobsFromPayload(
   const args = tx.payload?.arguments;
   if (!Array.isArray(args) || args.length < 4) return [];
 
-  // Find the names array: first arg that is a string[]
-  // The Aptos REST API serializes Move string[] as a JS string[] directly.
   let names: string[] = [];
   let expiryMicro = 0;
   let merkleRoots: string[] = [];
   let sizes: string[] = [];
 
-  // Standard layout: args[0]=names, args[1]=expiry, args[2]=merkleRoots, args[3]=encodings, args[4]=sizes
-  // args[0][0] may be undefined for empty array — treat any string[] (including empty) as standard layout
-  if (Array.isArray(args[0]) && (args[0].length === 0 || typeof args[0][0] === 'string')) {
+  const fnName = tx.payload?.function ?? '';
+
+  if (Array.isArray(args[0])) {
+    // register_multiple_blobs: args[0]=names[], args[2]=merkleRoots[], args[4]=sizes[]
     names = args[0] as string[];
     expiryMicro = Number(args[1]);
     merkleRoots = Array.isArray(args[2]) ? (args[2] as string[]) : [];
-    // args[3] = encodingParams (skip)
     sizes = Array.isArray(args[4]) ? (args[4] as string[]) : [];
-  } else if (typeof args[0] === 'string' && args[0].startsWith('0x')) {
-    // Alternate layout: single blob where args[0]=name, args[1]=expiry, args[2]=merkleRoot, args[3]=size
-    // (some older register_blob calls)
+  } else if (typeof args[0] === 'string') {
+    // register_blob (single): args[0]=name, args[1]=expiry, args[2]=merkleRoot, args[4]=size
     names = [args[0] as string];
     expiryMicro = Number(args[1]);
-    merkleRoots = [args[2] as string ?? ''];
-    sizes = [String(args[args.length - 1] ?? '0')];
+    merkleRoots = [String(args[2] ?? '')];
+    sizes = [String(args[4] ?? '0')];
   }
 
   if (names.length === 0) return [];
@@ -207,9 +206,10 @@ export async function fetchBlobEvents(
   address: string,
   network: NetworkId
 ): Promise<BlobMetadata[]> {
+  const paddedAddr = padAddress(address);
   // Step 1: Get blob transaction versions via GraphQL — let errors propagate
   const data = await queryIndexer<{ account_transactions: RawBlobTx[] }>(
-    network, BLOB_TX_QUERY, { addr: address }
+    network, BLOB_TX_QUERY, { addr: paddedAddr }
   );
   const txVersions = (data?.account_transactions ?? [])
     .map(t => t.transaction_version);
@@ -226,7 +226,7 @@ export async function fetchBlobEvents(
       batch.map(v => fetchTxDetails(v, network))
     );
     for (const tx of txDetails) {
-      if (tx) blobs.push(...parseBlobsFromPayload(tx, address));
+      if (tx) blobs.push(...parseBlobsFromPayload(tx, paddedAddr));
     }
   }
   return blobs;

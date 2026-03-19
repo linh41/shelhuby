@@ -1,6 +1,6 @@
 'use client';
 // Custom GitHub-style contribution heatmap — no external deps
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { type BlobMetadata } from '@/app/types';
 import { formatBytes } from '@/app/lib/utils';
 
@@ -92,9 +92,17 @@ export function CalendarHeatmap({ blobs, onDateSelect }: CalendarHeatmapProps) {
 
   const cellStride = SQUARE_SIZE + GAP;
   const gridWidth = weeks.length * cellStride;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to right so recent activity is visible
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [dayMap]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" ref={scrollRef}>
       <div style={{ minWidth: gridWidth + 32, position: 'relative' }}>
         {/* Month labels */}
         <div style={{ marginLeft: 28, position: 'relative', height: 18 }}>

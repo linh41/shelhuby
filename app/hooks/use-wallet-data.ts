@@ -10,7 +10,8 @@ import {
 import { classifyBlob } from '@/app/lib/classifier';
 import { calculateStorageScore } from '@/app/lib/storage-score';
 
-const SESSION_CACHE_PREFIX = 'shehuby:wallet:';
+// Bump version when query/parsing logic changes to invalidate stale caches
+const SESSION_CACHE_PREFIX = 'shehuby:v2:wallet:';
 
 function getCachedData(key: string): WalletData | null {
   if (typeof sessionStorage === 'undefined') return null;

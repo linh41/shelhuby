@@ -11,6 +11,50 @@ import { BlobInspector } from '@/app/components/blob-inspector';
 import { CostContainer } from '@/app/components/cost-breakdown/cost-container';
 import { ExpiryAlerts } from '@/app/components/expiry-alerts';
 
+// Heatmap-shaped skeleton shown while timeline data loads
+function TimelineLoadingSkeleton() {
+  return (
+    <div
+      className="rounded-2xl flex flex-col gap-5"
+      style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius)', padding: 32 }}
+    >
+      {/* Header row */}
+      <div className="flex items-center gap-3">
+        <div className="h-6 w-32 rounded-lg animate-pulse" style={{ background: 'var(--card-elevated)' }} />
+        <div className="h-5 w-14 rounded-lg animate-pulse" style={{ background: 'var(--card-elevated)' }} />
+        <div className="flex-1" />
+        <div className="h-7 w-28 rounded-lg animate-pulse" style={{ background: 'var(--card-elevated)' }} />
+      </div>
+      {/* Filter row */}
+      <div className="flex gap-2">
+        {[60, 52, 52, 52].map((w, i) => (
+          <div key={i} className="h-7 rounded-xl animate-pulse" style={{ width: w, background: 'var(--card-elevated)' }} />
+        ))}
+      </div>
+      {/* Heatmap grid — 12 month columns × 7 week rows */}
+      <div className="flex gap-1.5 overflow-hidden">
+        {Array.from({ length: 12 }).map((_, col) => (
+          <div key={col} className="flex flex-col gap-1.5">
+            {Array.from({ length: 7 }).map((_, row) => (
+              <div
+                key={row}
+                className="rounded-sm animate-pulse"
+                style={{
+                  width: 12,
+                  height: 12,
+                  background: 'var(--card-elevated)',
+                  opacity: Math.random() > 0.6 ? 0.6 : 0.25,
+                  animationDelay: `${(col * 7 + row) * 20}ms`,
+                }}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -62,8 +106,8 @@ function DashboardContent() {
 
       {/* Header bar */}
       <header
-        className="relative z-10 flex items-center gap-4 rounded-2xl"
-        style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius)', padding: '16px 48px' }}
+        className="relative z-10 flex flex-wrap items-center gap-3 rounded-2xl"
+        style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius)', padding: '16px 24px' }}
       >
         <button
           onClick={() => router.push('/')}
@@ -73,10 +117,10 @@ function DashboardContent() {
           Shehuby
         </button>
 
-        {/* Centered search bar */}
-        <div className="flex-1 flex justify-center">
+        {/* Search bar — full-width on mobile, centered with max-width on md+ */}
+        <div className="flex-1 flex justify-center order-last md:order-none w-full md:w-auto">
           <div
-            className="flex items-center gap-2 rounded-2xl px-3.5 h-8 w-full max-w-[360px]"
+            className="flex items-center gap-2 rounded-2xl px-3.5 h-8 w-full md:max-w-[360px]"
             style={{ background: 'var(--card-elevated)', border: '1px solid var(--page-bg)' }}
           >
             <Search size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
@@ -94,7 +138,7 @@ function DashboardContent() {
 
         {/* Network pill switch — matches .pen pillSwitch */}
         <div
-          className="flex rounded-[14px] p-0.5 h-7"
+          className="flex rounded-[14px] p-0.5 h-7 shrink-0"
           style={{ background: 'rgba(245,240,235,0.05)' }}
         >
           {(['shelbynet', 'testnet'] as NetworkId[]).map((net) => (
@@ -176,8 +220,32 @@ function DashboardContent() {
         </div>
       )}
 
+      {/* No blob activity message */}
+      {data && !loading && data.blobs.length === 0 && (
+        <div
+          className="relative z-10 flex flex-col items-center justify-center gap-4 rounded-2xl py-16"
+          style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius-lg)' }}
+        >
+          <div className="rounded-full p-4" style={{ background: 'rgba(255,105,180,0.1)' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3" />
+              <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+              <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-base font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+              No blob activity found
+            </p>
+            <p className="text-sm max-w-xs" style={{ color: 'var(--text-secondary)' }}>
+              This wallet has no blob storage transactions on the current network. Try switching networks or searching a different address.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Two-column layout: timeline (60%) + cost (40%) */}
-      {(loading || data) && (
+      {(loading || (data && data.blobs.length > 0)) && (
         <div
           className="relative z-10 flex flex-col md:flex-row items-start"
           style={{ gap: 'var(--bento-gap)' }}
@@ -186,14 +254,7 @@ function DashboardContent() {
             {data && !loading ? (
               <TimelineContainer blobs={data.blobs} network={network} onBlobClick={setSelectedBlob} />
             ) : (
-              <div
-                className="rounded-2xl animate-pulse"
-                style={{
-                  height: 256,
-                  background: 'var(--card-default)',
-                  borderRadius: 'var(--card-radius)',
-                }}
-              />
+              <TimelineLoadingSkeleton />
             )}
           </div>
           <div className="w-full md:w-[40%]">

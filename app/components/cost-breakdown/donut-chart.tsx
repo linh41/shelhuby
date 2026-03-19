@@ -10,7 +10,7 @@ interface DonutChartProps {
 // Pink for ShelbyUSD, dark pink for APT — matches .pen donut
 const SHELBY_COLOR = '#FF69B4';
 const APT_COLOR    = '#E85DA0';
-const RADIUS       = 54;
+const RADIUS       = 70;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function DonutChart({ shelbyUsdTotal, aptTotal }: DonutChartProps) {
@@ -31,39 +31,39 @@ export function DonutChart({ shelbyUsdTotal, aptTotal }: DonutChartProps) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <svg viewBox="0 0 180 180" width={180} height={180} aria-label="Cost breakdown donut chart">
+      <svg viewBox="0 0 220 220" width={220} height={220} aria-label="Cost breakdown donut chart">
         {/* Track */}
         <circle
-          cx={90} cy={90} r={RADIUS}
+          cx={110} cy={110} r={RADIUS}
           fill="none"
           stroke="rgba(245,240,235,0.08)"
-          strokeWidth={20}
+          strokeWidth={18}
         />
         {/* ShelbyUSD segment */}
         <circle
-          cx={90} cy={90} r={RADIUS}
+          cx={110} cy={110} r={RADIUS}
           fill="none"
           stroke={SHELBY_COLOR}
-          strokeWidth={20}
+          strokeWidth={18}
           strokeDasharray={`${shelbyDash} ${CIRCUMFERENCE - shelbyDash}`}
           strokeDashoffset={CIRCUMFERENCE / 4}
           strokeLinecap="butt"
         />
         {/* APT segment */}
         <circle
-          cx={90} cy={90} r={RADIUS}
+          cx={110} cy={110} r={RADIUS}
           fill="none"
           stroke={APT_COLOR}
-          strokeWidth={20}
+          strokeWidth={18}
           strokeDasharray={`${aptDash} ${CIRCUMFERENCE - aptDash}`}
           strokeDashoffset={CIRCUMFERENCE / 4 - shelbyDash}
           strokeLinecap="butt"
         />
         {/* Center total */}
-        <text x={90} y={85} textAnchor="middle" fontSize={22} fontWeight="700" fill="var(--text-primary)">
+        <text x={110} y={105} textAnchor="middle" fontSize={20} fontWeight="700" fill="var(--text-primary)">
           {formatCurrency(total)}
         </text>
-        <text x={90} y={102} textAnchor="middle" fontSize={10} fontWeight="500" fill="var(--text-tertiary)" letterSpacing="1.5">
+        <text x={110} y={122} textAnchor="middle" fontSize={10} fontWeight="500" fill="var(--text-tertiary)" letterSpacing="1.5">
           TOTAL COST
         </text>
       </svg>

@@ -1,7 +1,7 @@
 'use client';
 // Slide-in drawer showing full blob metadata + quick actions — Shelby dark brown style
-import { useEffect } from 'react';
-import { X, ExternalLink, Download, Compass } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { X, ExternalLink, Download, Compass, FileText, FileCode, Film, Music, Archive, Database, Loader2 } from 'lucide-react';
 import { type BlobMetadata, type NetworkId } from '@/app/types';
 import {
   truncateAddress,
@@ -15,6 +15,102 @@ import {
 } from '@/app/lib/utils';
 import { CopyButton } from '@/app/components/ui/copy-button';
 import { BlobTypeBadge } from '@/app/components/blob-timeline/blob-type-badge';
+
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  image: Film, video: Film, audio: Music, document: FileText,
+  code: FileCode, archive: Archive, data: Database,
+};
+
+// Fetch blob via our proxy to get correct Content-Type (Shelby API returns octet-stream)
+function BlobPreview({ owner, blobName, category, network }: {
+  owner: string; blobName: string; category: string; network: NetworkId;
+}) {
+  const [state, setState] = useState<'loading' | 'image' | 'text' | 'error'>('loading');
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [textContent, setTextContent] = useState<string | null>(null);
+
+  const loadPreview = useCallback(async () => {
+    setState('loading');
+    try {
+      const proxyUrl = `/api/blob-proxy?owner=${encodeURIComponent(owner)}&name=${encodeURIComponent(blobName)}&network=${network}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) { setState('error'); return; }
+
+      const mime = res.headers.get('content-type') ?? '';
+
+      if (mime.startsWith('image/')) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        setObjectUrl(url);
+        setState('image');
+      } else if (mime.startsWith('text/') || mime === 'application/json') {
+        const text = await res.text();
+        setTextContent(text.slice(0, 2000));
+        setState('text');
+      } else {
+        setState('error');
+      }
+    } catch {
+      setState('error');
+    }
+  }, [owner, blobName, network]);
+
+  useEffect(() => {
+    loadPreview();
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadPreview]);
+
+  if (state === 'loading') {
+    return (
+      <div
+        className="rounded-xl flex items-center justify-center"
+        style={{ height: 220, background: 'var(--card-elevated)', border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12 }}
+      >
+        <Loader2 size={24} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
+      </div>
+    );
+  }
+
+  if (state === 'image' && objectUrl) {
+    return (
+      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={objectUrl}
+          alt={blobName}
+          className="w-full object-contain"
+          style={{ maxHeight: 220, background: 'var(--card-elevated)' }}
+          onError={() => setState('error')}
+        />
+      </div>
+    );
+  }
+
+  if (state === 'text' && textContent) {
+    return (
+      <div
+        className="rounded-xl overflow-auto"
+        style={{ maxHeight: 220, background: 'var(--card-elevated)', border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12, padding: 12 }}
+      >
+        <pre className="text-xs whitespace-pre-wrap break-all" style={{ color: 'var(--text-secondary)', margin: 0 }}>
+          {textContent}
+        </pre>
+      </div>
+    );
+  }
+
+  const Icon = CATEGORY_ICONS[category] ?? FileText;
+  return (
+    <div
+      className="rounded-xl flex flex-col items-center justify-center gap-2"
+      style={{ height: 220, background: 'var(--card-elevated)', border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12 }}
+    >
+      <Icon size={32} style={{ color: 'var(--text-tertiary)' }} />
+      <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No preview available</span>
+    </div>
+  );
+}
 
 interface BlobInspectorProps {
   blob: BlobMetadata | null;
@@ -97,9 +193,9 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
         aria-hidden="true"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel — full-screen on mobile, 448px drawer on md+ */}
       <aside
-        className="fixed right-0 top-0 h-full z-50 flex flex-col overflow-hidden"
+        className="blob-inspector-panel fixed right-0 top-0 h-full z-50 flex flex-col overflow-hidden"
         style={{
           width: 'min(448px, 100vw)',
           background: 'var(--card-default)',
@@ -155,18 +251,8 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
             </div>
           </div>
 
-          {/* Preview placeholder */}
-          <div
-            className="rounded-xl flex items-center justify-center"
-            style={{
-              height: 220,
-              background: 'var(--card-elevated)',
-              border: '1px solid rgba(255,105,180,0.19)',
-              borderRadius: 12,
-            }}
-          >
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Preview</span>
-          </div>
+          {/* Safe preview via proxy — no auto-downloads */}
+          <BlobPreview owner={blob.owner} blobName={blob.name} category={category} network={network} />
 
           {/* Divider */}
           <div style={{ height: 1, background: '#5A4838' }} />

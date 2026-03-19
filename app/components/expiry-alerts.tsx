@@ -1,7 +1,7 @@
 'use client';
 // Collapsible expiry alerts banner — shows blobs expiring in 24h / 7d / 30d
 import { useState } from 'react';
-import { X, TriangleAlert, Timer } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, TriangleAlert, Timer } from 'lucide-react';
 import { type BlobMetadata } from '@/app/types';
 import { formatBytes } from '@/app/lib/utils';
 
@@ -120,12 +120,14 @@ function AlertRow({ item, onClick }: { item: AlertItem; onClick: () => void }) {
 
 export function ExpiryAlerts({ blobs, onBlobClick }: ExpiryAlertsProps) {
   const [dismissed, setDismissed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const alerts = classifyBlobs(blobs);
 
   if (alerts.length === 0 || dismissed) return null;
 
   const criticalCount = alerts.filter((a) => a.level === 'critical').length;
   const warningCount  = alerts.filter((a) => a.level === 'warning').length;
+  const ChevronIcon = expanded ? ChevronUp : ChevronDown;
 
   return (
     <div
@@ -136,9 +138,12 @@ export function ExpiryAlerts({ blobs, onBlobClick }: ExpiryAlertsProps) {
         padding: '24px 48px',
       }}
     >
-      {/* Header */}
+      {/* Header — clickable to expand/collapse */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-2.5 flex-wrap flex-1 text-left"
+        >
           <span className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
             Expiry Alerts
           </span>
@@ -158,7 +163,8 @@ export function ExpiryAlerts({ blobs, onBlobClick }: ExpiryAlertsProps) {
               {warningCount} Warning
             </span>
           )}
-        </div>
+          <ChevronIcon size={16} className="ml-1" style={{ color: 'var(--text-tertiary)' }} />
+        </button>
         <button
           onClick={() => setDismissed(true)}
           className="rounded-lg p-1 transition-colors hover:opacity-60"
@@ -169,16 +175,18 @@ export function ExpiryAlerts({ blobs, onBlobClick }: ExpiryAlertsProps) {
         </button>
       </div>
 
-      {/* Alert rows */}
-      <div className="flex flex-col gap-2">
-        {alerts.map((item) => (
-          <AlertRow
-            key={item.blob.merkleRoot}
-            item={item}
-            onClick={() => onBlobClick(item.blob)}
-          />
-        ))}
-      </div>
+      {/* Alert rows — only visible when expanded */}
+      {expanded && (
+        <div className="flex flex-col gap-2">
+          {alerts.map((item) => (
+            <AlertRow
+              key={item.blob.merkleRoot}
+              item={item}
+              onClick={() => onBlobClick(item.blob)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
