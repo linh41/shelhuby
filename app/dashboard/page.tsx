@@ -1,0 +1,235 @@
+'use client';
+// Dashboard page — wallet analytics, loaded from URL search params
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { Search } from 'lucide-react';
+import { type NetworkId, type BlobMetadata } from '@/app/types';
+import { useWalletData } from '@/app/hooks/use-wallet-data';
+import { ProfileCard } from '@/app/components/profile-card';
+import { TimelineContainer } from '@/app/components/blob-timeline/timeline-container';
+import { BlobInspector } from '@/app/components/blob-inspector';
+import { CostContainer } from '@/app/components/cost-breakdown/cost-container';
+import { ExpiryAlerts } from '@/app/components/expiry-alerts';
+
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const initialAddress = searchParams.get('address') ?? '';
+  const initialNetwork = (searchParams.get('network') ?? 'shelbynet') as NetworkId;
+
+  const [address, setAddress] = useState<string | null>(initialAddress || null);
+  const [network, setNetwork] = useState<NetworkId>(initialNetwork);
+  const [searchInput, setSearchInput] = useState(initialAddress);
+  const [selectedBlob, setSelectedBlob] = useState<BlobMetadata | null>(null);
+
+  const { data, loading, error, refetch } = useWalletData(address, network);
+
+  // Sync URL when address/network change
+  useEffect(() => {
+    if (address) {
+      router.replace(`/dashboard?address=${encodeURIComponent(address)}&network=${network}`, { scroll: false });
+    }
+  }, [address, network, router]);
+
+  function handleSearch() {
+    const trimmed = searchInput.trim();
+    if (trimmed && trimmed.startsWith('0x') && trimmed.length > 10) {
+      setAddress(trimmed);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') handleSearch();
+  }
+
+  function handleNetworkChange(net: NetworkId) {
+    setNetwork(net);
+  }
+
+  return (
+    <main
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{ background: 'var(--page-bg)', padding: 'var(--bento-gap)', gap: 'var(--bento-gap)' }}
+    >
+      {/* Decorative diagonal stripes */}
+      <div className="absolute rounded-lg opacity-[0.08]" style={{ width: 600, height: 120, background: 'var(--accent)', transform: 'rotate(30deg)', top: 30, left: -80 }} />
+      <div className="absolute rounded-lg opacity-[0.10]" style={{ width: 500, height: 100, background: 'var(--accent)', transform: 'rotate(-28deg)', top: -30, right: -50 }} />
+      <div className="absolute rounded-lg opacity-[0.06]" style={{ width: 800, height: 140, background: 'var(--accent)', transform: 'rotate(-32deg)', top: 500, left: -150 }} />
+      <div className="absolute rounded-lg opacity-[0.12]" style={{ width: 700, height: 110, background: 'var(--accent)', transform: 'rotate(25deg)', bottom: 100, right: -100 }} />
+      <div className="absolute rounded-lg opacity-[0.07]" style={{ width: 550, height: 120, background: 'var(--accent)', transform: 'rotate(30deg)', bottom: -50, left: -50 }} />
+      <div className="absolute rounded-lg opacity-[0.09]" style={{ width: 500, height: 100, background: 'var(--accent)', transform: 'rotate(-30deg)', bottom: -50, right: 0 }} />
+
+      {/* Header bar */}
+      <header
+        className="relative z-10 flex items-center gap-4 px-4 py-2.5 rounded-2xl"
+        style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius)' }}
+      >
+        <button
+          onClick={() => router.push('/')}
+          className="text-xl font-medium tracking-tight shrink-0 transition-opacity hover:opacity-70"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          Shehuby
+        </button>
+
+        {/* Centered search bar */}
+        <div className="flex-1 flex justify-center px-2">
+          <div
+            className="flex items-center gap-2 rounded-2xl px-3.5 py-1.5 w-full max-w-[360px]"
+            style={{ background: 'var(--card-elevated)', border: '1px solid var(--page-bg)' }}
+          >
+            <Search size={13} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search wallet address (0x...)"
+              className="flex-1 bg-transparent text-xs outline-none"
+              style={{ color: 'var(--text-primary)' }}
+            />
+            {searchInput && (
+              <button
+                onClick={handleSearch}
+                className="text-xs font-medium px-2 py-0.5 rounded-full transition-colors hover:opacity-80"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                Go
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Network pill switch — matches .pen pillSwitch */}
+        <div
+          className="flex rounded-[14px] p-0.5 h-7"
+          style={{ background: 'rgba(245,240,235,0.05)' }}
+        >
+          {(['shelbynet', 'testnet'] as NetworkId[]).map((net) => (
+            <button
+              key={net}
+              onClick={() => handleNetworkChange(net)}
+              className="rounded-xl px-3 text-xs font-medium transition-colors h-full"
+              style={
+                network === net
+                  ? { background: 'var(--text-primary)', color: 'var(--text-tertiary)' }
+                  : { background: 'transparent', color: 'var(--text-tertiary)' }
+              }
+            >
+              {net === 'shelbynet' ? 'Shelbynet' : 'Testnet'}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* Error state */}
+      {error && !loading && (
+        <div
+          className="relative z-10 rounded-xl px-4 py-3 flex items-center justify-between gap-4"
+          style={{
+            background: 'var(--card-default)',
+            border: `1.5px solid var(--danger)`,
+            borderRadius: 'var(--card-radius)',
+          }}
+        >
+          <p className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>
+          <button
+            onClick={refetch}
+            className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
+            style={{ border: '1px solid var(--danger)', color: 'var(--danger)' }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Empty state — no search yet */}
+      {!address && !loading && !error && (
+        <div
+          className="relative z-10 flex-1 flex flex-col items-center justify-center gap-5 rounded-2xl py-20"
+          style={{ background: 'var(--card-default)', borderRadius: 'var(--card-radius-lg)' }}
+        >
+          <div
+            className="rounded-full p-5"
+            style={{ background: 'rgba(255,105,180,0.1)' }}
+          >
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3" />
+              <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+              <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-base font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+              Explore storage activity
+            </p>
+            <p className="text-sm max-w-xs" style={{ color: 'var(--text-secondary)' }}>
+              Enter a wallet address above to inspect blobs, costs, and expiry status on Shelby Network.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Profile card */}
+      {(loading || data) && (
+        <div className="relative z-10">
+          <ProfileCard profile={data?.profile ?? null} loading={loading} />
+        </div>
+      )}
+
+      {/* Expiry alerts */}
+      {data && !loading && data.blobs.length > 0 && (
+        <div className="relative z-10">
+          <ExpiryAlerts blobs={data.blobs} onBlobClick={setSelectedBlob} />
+        </div>
+      )}
+
+      {/* Two-column layout: timeline (60%) + cost (40%) */}
+      {(loading || data) && (
+        <div
+          className="relative z-10 flex flex-col md:flex-row items-start"
+          style={{ gap: 'var(--bento-gap)' }}
+        >
+          <div className="w-full md:w-[60%]">
+            {data && !loading ? (
+              <TimelineContainer blobs={data.blobs} network={network} onBlobClick={setSelectedBlob} />
+            ) : (
+              <div
+                className="rounded-2xl animate-pulse"
+                style={{
+                  height: 256,
+                  background: 'var(--card-default)',
+                  borderRadius: 'var(--card-radius)',
+                }}
+              />
+            )}
+          </div>
+          <div className="w-full md:w-[40%]">
+            <CostContainer
+              costHistory={data?.costHistory ?? []}
+              totalStorageBytes={data?.profile.totalStorageBytes ?? 0}
+              totalBlobs={data?.profile.totalBlobs ?? 0}
+              loading={loading}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Blob inspector drawer */}
+      <BlobInspector blob={selectedBlob} network={network} onClose={() => setSelectedBlob(null)} />
+    </main>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--page-bg)' }}>
+        <div className="h-8 w-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)' }} />
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
+  );
+}
