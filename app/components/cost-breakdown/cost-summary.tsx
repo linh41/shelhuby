@@ -60,7 +60,7 @@ export function CostSummary({ costHistory, totalStorageBytes, totalTransactions 
       </div>
       <div className="grid grid-cols-2 gap-2.5">
         <MetricCard label="Cost / GB" value={formatCurrency(costPerGb)} />
-        <MetricCard label="Avg Gas/TX" value={formatCurrency(avgGas, 'APT')} />
+        <MetricCard label="Avg Gas/TX" value={formatCurrency(avgGas, 'APT', 6)} />
       </div>
     </div>
   );

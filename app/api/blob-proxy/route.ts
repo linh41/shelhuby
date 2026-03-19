@@ -2,6 +2,7 @@
 // so browsers can render images inline instead of downloading
 import { NextRequest, NextResponse } from 'next/server';
 import { NETWORKS } from '@/app/lib/networks';
+import { padAddress } from '@/app/lib/utils';
 import { type NetworkId } from '@/app/types';
 
 const MAX_PREVIEW_BYTES = 5 * 1024 * 1024; // 5 MB limit for preview
@@ -58,7 +59,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid network' }, { status: 400 });
   }
 
-  const blobUrl = `${NETWORKS[network].shelbyRpc}/v1/blobs/${owner}/${encodeURIComponent(name)}`;
+  const paddedOwner = padAddress(owner);
+  const blobUrl = `${NETWORKS[network].shelbyRpc}/v1/blobs/${paddedOwner}/${encodeURIComponent(name)}`;
 
   try {
     const res = await fetch(blobUrl, {

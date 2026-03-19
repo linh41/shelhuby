@@ -76,7 +76,7 @@ export function DonutChart({ shelbyUsdTotal, aptTotal }: DonutChartProps) {
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full shrink-0" style={{ background: APT_COLOR }} />
-          <span style={{ color: 'var(--text-secondary)' }}>APT Gas · {formatCurrency(aptTotal, 'APT')}</span>
+          <span style={{ color: 'var(--text-secondary)' }}>APT Gas · {formatCurrency(aptTotal, 'APT', 6)}</span>
         </span>
       </div>
     </div>

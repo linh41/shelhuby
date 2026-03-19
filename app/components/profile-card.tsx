@@ -1,14 +1,18 @@
 'use client';
 // Wallet profile card showing balances, blob stats, and storage score
-import { type WalletProfile } from '@/app/types';
+import { useMemo } from 'react';
+import { type WalletProfile, type BlobMetadata, type BlobCategory, type NetworkId } from '@/app/types';
 import { NETWORKS } from '@/app/lib/networks';
 import { truncateAddress, formatBytes, formatDate, formatCurrency } from '@/app/lib/utils';
+import { classifyBlob } from '@/app/lib/classifier';
 import { Skeleton } from '@/app/components/ui/skeleton';
 import { CopyButton } from '@/app/components/ui/copy-button';
 import { StorageScoreRing } from '@/app/components/storage-score-ring';
 
 interface ProfileCardProps {
   profile: WalletProfile | null;
+  blobs?: BlobMetadata[];
+  network?: NetworkId;
   loading?: boolean;
 }
 
@@ -42,7 +46,10 @@ function MetricCard({ label, value }: { label: string; value: React.ReactNode })
   return (
     <div
       className="flex flex-col gap-1 rounded-lg py-4 px-5"
-      style={{ background: 'rgba(245,240,235,0.03)' }}
+      style={{
+        background: 'rgba(245,240,235,0.03)',
+        transition: 'background-color 0.2s ease',
+      }}
     >
       <span
         className="text-[11px] uppercase tracking-[1px] font-medium"
@@ -50,7 +57,8 @@ function MetricCard({ label, value }: { label: string; value: React.ReactNode })
       >
         {label}
       </span>
-      <span className="text-[28px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
+      {/* tabular-nums prevents layout shift when numbers update */}
+      <span className="tabular-nums text-[28px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
         {value}
       </span>
     </div>
@@ -59,15 +67,50 @@ function MetricCard({ label, value }: { label: string; value: React.ReactNode })
 
 // ── Blob distribution bar ──────────────────────────────────────────────────────
 
-const DIST_ITEMS = [
-  { label: 'Image',    pct: 45, color: '#3498DB' },
-  { label: 'Document', pct: 25, color: '#2ECC71' },
-  { label: 'Data',     pct: 15, color: '#F39C12' },
-  { label: 'Video',    pct: 10, color: '#9B59B6' },
-  { label: 'Other',    pct: 5,  color: '#BDC3C7' },
-];
+const CATEGORY_COLORS: Record<BlobCategory, string> = {
+  image:     '#3498DB',
+  video:     '#9B59B6',
+  audio:     '#E91E63',
+  document:  '#2ECC71',
+  data:      '#F39C12',
+  code:      '#1ABC9C',
+  archive:   '#95A5A6',
+  'ai-model':'#E74C3C',
+  unknown:   '#BDC3C7',
+};
 
-function BlobDistributionBar() {
+const CATEGORY_LABELS: Record<BlobCategory, string> = {
+  image: 'Image', video: 'Video', audio: 'Audio', document: 'Document',
+  data: 'Data', code: 'Code', archive: 'Archive', 'ai-model': 'AI Model',
+  unknown: 'Other',
+};
+
+interface DistItem { label: string; pct: number; color: string }
+
+function computeDistribution(blobs: BlobMetadata[], network: NetworkId): DistItem[] {
+  if (blobs.length === 0) return [];
+  const counts = new Map<BlobCategory, number>();
+  for (const blob of blobs) {
+    const classification = blob.classification ?? classifyBlob(blob, network);
+    const cat = classification.category;
+    counts.set(cat, (counts.get(cat) ?? 0) + 1);
+  }
+  const total = blobs.length;
+  const items: DistItem[] = [];
+  for (const [cat, count] of counts) {
+    items.push({
+      label: CATEGORY_LABELS[cat] ?? 'Other',
+      pct: Math.round((count / total) * 100),
+      color: CATEGORY_COLORS[cat] ?? '#BDC3C7',
+    });
+  }
+  // Sort descending by percentage
+  items.sort((a, b) => b.pct - a.pct);
+  return items;
+}
+
+function BlobDistributionBar({ items }: { items: DistItem[] }) {
+  if (items.length === 0) return null;
   return (
     <div className="flex flex-col gap-2.5">
       <span
@@ -78,7 +121,7 @@ function BlobDistributionBar() {
       </span>
       {/* Segmented bar */}
       <div className="flex rounded-md overflow-hidden h-3">
-        {DIST_ITEMS.map((item) => (
+        {items.map((item) => (
           <div
             key={item.label}
             style={{ width: `${item.pct}%`, background: item.color, flexShrink: 0 }}
@@ -87,7 +130,7 @@ function BlobDistributionBar() {
       </div>
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-        {DIST_ITEMS.map((item) => (
+        {items.map((item) => (
           <span key={item.label} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
             <span className="h-2 w-2 rounded-full shrink-0" style={{ background: item.color }} />
             {item.label} {item.pct}%
@@ -100,11 +143,12 @@ function BlobDistributionBar() {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function ProfileCard({ profile, loading = false }: ProfileCardProps) {
+export function ProfileCard({ profile, blobs = [], network = 'shelbynet', loading = false }: ProfileCardProps) {
   if (loading) return <ProfileSkeleton />;
   if (!profile) return null;
 
   const networkName = NETWORKS[profile.network]?.name ?? profile.network;
+  const distItems = useMemo(() => computeDistribution(blobs, network), [blobs, network]);
 
   return (
     <div
@@ -140,14 +184,14 @@ export function ProfileCard({ profile, loading = false }: ProfileCardProps) {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         <MetricCard label="ShelbyUSD Spent" value={formatCurrency(profile.totalShelbyUsdSpent, 'SUSD')} />
-        <MetricCard label="APT Gas Spent" value={formatCurrency(profile.totalAptSpent, 'APT')} />
+        <MetricCard label="APT Gas Spent" value={formatCurrency(profile.totalAptSpent, 'APT', 6)} />
         {profile.firstActiveDate && (
           <MetricCard label="First Active" value={formatDate(profile.firstActiveDate)} />
         )}
       </div>
 
       {/* Blob type distribution */}
-      <BlobDistributionBar />
+      <BlobDistributionBar items={distItems} />
     </div>
   );
 }

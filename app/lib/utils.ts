@@ -59,10 +59,10 @@ export function getTimeAgo(timestamp: number): string {
 
 // ── Currency ──────────────────────────────────────────────────────────────────
 
-export function formatCurrency(amount: number, symbol = ''): string {
+export function formatCurrency(amount: number, symbol = '', maxDecimals = 2): string {
   const formatted = amount.toLocaleString('en-US', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
+    maximumFractionDigits: maxDecimals,
   });
   return symbol ? `${formatted} ${symbol}` : formatted;
 }
@@ -108,7 +108,7 @@ export function getBlobStatus(expiryTimestamp: number): BlobStatus {
 
 export function getBlobUrl(owner: string, blobName: string, network: NetworkId): string {
   const base = NETWORKS[network].shelbyRpc;
-  return `${base}/blobs/${owner}/${encodeURIComponent(blobName)}`;
+  return `${base}/v1/blobs/${padAddress(owner)}/${encodeURIComponent(blobName)}`;
 }
 
 export function getExplorerUrl(txHash: string, network: NetworkId): string {

@@ -14,8 +14,12 @@ interface DayData {
   totalSize: number;
 }
 
+// Use local date (not UTC) so grid cells match blob timestamps in user's timezone
 function toDateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 // 5-level pink scale — dark brown base, pink gradient matching .pen heatmap legend
@@ -29,8 +33,9 @@ function getCellColor(count: number): string {
 }
 
 const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
-const SQUARE_SIZE = 12;
-const GAP = 2;
+// Match .pen design: 20px cells, 4px gap, 4px corner radius
+const SQUARE_SIZE = 20;
+const GAP = 4;
 
 export function CalendarHeatmap({ blobs, onDateSelect }: CalendarHeatmapProps) {
   const [tooltip, setTooltip] = useState<{
@@ -166,7 +171,7 @@ export function CalendarHeatmap({ blobs, onDateSelect }: CalendarHeatmapProps) {
                     style={{
                       width: SQUARE_SIZE,
                       height: SQUARE_SIZE,
-                      borderRadius: 2,
+                      borderRadius: 4,
                       cursor: data.count > 0 ? 'pointer' : 'default',
                       backgroundColor: getCellColor(data.count),
                       transition: 'opacity 0.1s',
@@ -201,19 +206,19 @@ export function CalendarHeatmap({ blobs, onDateSelect }: CalendarHeatmapProps) {
 
         {/* Legend */}
         <div className="flex items-center gap-1.5 mt-2 justify-end">
-          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Less</span>
+          <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>Less</span>
           {[0, 1, 3, 5, 8, 12].map((count) => (
             <div
               key={count}
               style={{
-                width: SQUARE_SIZE,
-                height: SQUARE_SIZE,
-                borderRadius: 2,
+                width: 14,
+                height: 14,
+                borderRadius: 3,
                 backgroundColor: getCellColor(count),
               }}
             />
           ))}
-          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>More</span>
+          <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>More</span>
         </div>
       </div>
     </div>

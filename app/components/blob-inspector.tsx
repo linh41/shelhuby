@@ -28,59 +28,79 @@ function BlobPreview({ owner, blobName, category, network }: {
   const [state, setState] = useState<'loading' | 'image' | 'text' | 'error'>('loading');
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const loadPreview = useCallback(async () => {
     setState('loading');
+    setErrorMsg('');
     try {
       const proxyUrl = `/api/blob-proxy?owner=${encodeURIComponent(owner)}&name=${encodeURIComponent(blobName)}&network=${network}`;
       const res = await fetch(proxyUrl);
-      if (!res.ok) { setState('error'); return; }
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        setErrorMsg(`HTTP ${res.status}: ${body.slice(0, 100)}`);
+        setState('error');
+        return;
+      }
 
       const mime = res.headers.get('content-type') ?? '';
 
       if (mime.startsWith('image/')) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
-        setObjectUrl(url);
+        setObjectUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
         setState('image');
       } else if (mime.startsWith('text/') || mime === 'application/json') {
         const text = await res.text();
         setTextContent(text.slice(0, 2000));
         setState('text');
       } else {
+        setErrorMsg(`Unsupported type: ${mime}`);
         setState('error');
       }
-    } catch {
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Network error');
       setState('error');
     }
   }, [owner, blobName, network]);
 
   useEffect(() => {
     loadPreview();
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { setObjectUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; }); };
   }, [loadPreview]);
 
   if (state === 'loading') {
     return (
       <div
-        className="rounded-xl flex items-center justify-center"
-        style={{ height: 220, background: 'var(--card-elevated)', border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12 }}
+        className="rounded-xl flex flex-col items-center justify-center gap-2"
+        style={{ height: 180, background: 'var(--card-elevated)', border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12 }}
       >
-        <Loader2 size={24} className="animate-spin" style={{ color: 'var(--text-tertiary)' }} />
+        <Loader2 size={24} className="animate-spin" style={{ color: 'var(--accent)' }} />
+        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Loading preview…</span>
       </div>
     );
   }
 
   if (state === 'image' && objectUrl) {
     return (
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12 }}>
+      <div
+        className="rounded-xl"
+        style={{
+          border: '1px solid rgba(255,105,180,0.19)',
+          borderRadius: 12,
+          background: 'var(--card-elevated)',
+        }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={objectUrl}
           alt={blobName}
-          className="w-full object-contain"
-          style={{ maxHeight: 220, background: 'var(--card-elevated)' }}
+          style={{
+            display: 'block',
+            width: '100%',
+            height: 'auto',
+            borderRadius: 12,
+          }}
           onError={() => setState('error')}
         />
       </div>
@@ -104,10 +124,20 @@ function BlobPreview({ owner, blobName, category, network }: {
   return (
     <div
       className="rounded-xl flex flex-col items-center justify-center gap-2"
-      style={{ height: 220, background: 'var(--card-elevated)', border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12 }}
+      style={{ height: 180, background: 'var(--card-elevated)', border: '1px solid rgba(255,105,180,0.19)', borderRadius: 12 }}
     >
       <Icon size={32} style={{ color: 'var(--text-tertiary)' }} />
       <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>No preview available</span>
+      {errorMsg && (
+        <span className="text-[10px] px-3 text-center" style={{ color: 'var(--danger)' }}>{errorMsg}</span>
+      )}
+      <button
+        onClick={loadPreview}
+        className="text-xs font-medium px-3 py-1 rounded-lg press-feedback hover:opacity-80"
+        style={{ color: 'var(--accent)', border: '1px solid var(--accent)', transition: 'opacity 0.2s ease' }}
+      >
+        Retry
+      </button>
     </div>
   );
 }
@@ -138,7 +168,8 @@ function MetaRow({ label, value, valueColor }: { label: string; value: React.Rea
   return (
     <div className="flex items-center justify-between py-2">
       <span className="text-[13px]" style={{ color: 'var(--text-tertiary)' }}>{label}</span>
-      <span className="text-[13px]" style={{ color: valueColor ?? 'var(--text-primary)' }}>{value}</span>
+      {/* tabular-nums keeps numeric values from causing layout shift */}
+      <span className="tabular-nums text-[13px]" style={{ color: valueColor ?? 'var(--text-primary)' }}>{value}</span>
     </div>
   );
 }
@@ -218,12 +249,13 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
             </span>
             <button
               onClick={onClose}
-              className="shrink-0 rounded-lg flex items-center justify-center transition-colors hover:opacity-60"
+              className="shrink-0 rounded-lg flex items-center justify-center press-feedback hover:opacity-60"
               style={{
                 width: 32, height: 32,
                 background: 'var(--card-elevated)',
                 border: '1px solid rgba(255,105,180,0.15)',
                 color: 'var(--text-secondary)',
+                transition: 'opacity 0.2s ease, transform 0.1s ease',
               }}
               aria-label="Close inspector"
             >
@@ -269,7 +301,7 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
             />
             <MetaRow label="Encoding" value={blob.encoding || 'N/A'} />
             <MetaRow label="Storage Cost" value={formatCurrency(blob.storageCost, 'SUSD')} />
-            <MetaRow label="Gas Fee" value={formatCurrency(blob.gasFee, 'APT')} />
+            <MetaRow label="Gas Fee" value={formatCurrency(blob.gasFee, 'APT', 6)} />
           </div>
 
           {/* Divider */}
@@ -294,8 +326,8 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
               href={blobUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-bold transition-opacity hover:opacity-80"
-              style={{ background: 'var(--accent)', color: '#fff', height: 42 }}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-bold press-feedback hover:opacity-80"
+              style={{ background: 'var(--accent)', color: '#fff', height: 42, transition: 'opacity 0.2s ease, transform 0.1s ease' }}
             >
               <ExternalLink size={14} />
               Open Blob
@@ -304,12 +336,13 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
               href={explorerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-medium transition-colors hover:opacity-70"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-medium press-feedback hover:opacity-70"
               style={{
                 background: 'var(--card-elevated)',
                 border: '1px solid #5A4838',
                 color: 'var(--text-primary)',
                 height: 42,
+                transition: 'opacity 0.2s ease, transform 0.1s ease',
               }}
             >
               <Compass size={14} style={{ color: 'var(--text-secondary)' }} />
@@ -319,12 +352,13 @@ export function BlobInspector({ blob, network, onClose }: BlobInspectorProps) {
               href={blobUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-medium transition-colors hover:opacity-70"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-[10px] py-3 text-[13px] font-medium press-feedback hover:opacity-70"
               style={{
                 background: 'var(--card-elevated)',
                 border: '1px solid #5A4838',
                 color: 'var(--text-primary)',
                 height: 42,
+                transition: 'opacity 0.2s ease, transform 0.1s ease',
               }}
             >
               <Download size={14} style={{ color: 'var(--text-secondary)' }} />

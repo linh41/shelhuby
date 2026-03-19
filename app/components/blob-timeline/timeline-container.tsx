@@ -108,11 +108,11 @@ export function TimelineContainer({ blobs, network, onBlobClick }: TimelineConta
             <button
               key={m}
               type="button"
-              className="px-3.5 py-1.5 text-[13px] font-medium rounded-md transition-colors"
+              className="px-3.5 py-1.5 text-[13px] font-medium rounded-md press-feedback"
               style={
                 mode === m
-                  ? { background: 'var(--card-default)', color: 'var(--text-primary)' }
-                  : { background: 'transparent', color: 'var(--text-tertiary)' }
+                  ? { background: 'var(--card-default)', color: 'var(--text-primary)', transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.1s ease' }
+                  : { background: 'transparent', color: 'var(--text-tertiary)', transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.1s ease' }
               }
               onClick={() => setMode(m)}
             >

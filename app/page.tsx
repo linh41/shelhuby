@@ -37,6 +37,7 @@ export default function LandingPage() {
 
   return (
     <main
+      id="main-content"
       className="min-h-screen flex flex-col relative"
       style={{ background: 'var(--page-bg)', padding: 'var(--bento-gap)' }}
     >
@@ -111,8 +112,8 @@ export default function LandingPage() {
               />
               <button
                 onClick={handleExplore}
-                className="flex items-center gap-2 rounded-[10px] px-6 py-3 text-sm font-bold transition-opacity hover:opacity-90"
-                style={{ background: 'var(--accent)', color: '#fff' }}
+                className="flex items-center gap-2 rounded-[10px] px-6 py-3 text-sm font-bold press-feedback hover:opacity-90"
+                style={{ background: 'var(--accent)', color: '#fff', transition: 'opacity 0.2s ease, transform 0.1s ease' }}
               >
                 Explore
               </button>

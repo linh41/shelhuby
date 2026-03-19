@@ -22,11 +22,11 @@ export function NetworkSwitcher({ network, onChange }: NetworkSwitcherProps) {
         <button
           key={opt.id}
           onClick={() => onChange(opt.id)}
-          className="rounded-md px-4 py-1.5 text-[13px] font-medium transition-colors"
+          className="rounded-md px-4 py-1.5 text-[13px] font-medium press-feedback"
           style={
             network === opt.id
-              ? { background: 'var(--card-default)', color: 'var(--text-primary)' }
-              : { background: 'transparent', color: 'var(--text-tertiary)' }
+              ? { background: 'var(--card-default)', color: 'var(--text-primary)', transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.1s ease' }
+              : { background: 'transparent', color: 'var(--text-tertiary)', transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.1s ease' }
           }
         >
           {opt.label}

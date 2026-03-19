@@ -34,12 +34,17 @@ export function BlobCard({ blob, network, onClick }: BlobCardProps) {
     <button
       type="button"
       onClick={() => onClick(blob)}
-      className="w-full text-left px-0 py-3.5 flex items-center gap-3 transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+      className="w-full text-left px-2.5 py-3.5 -mx-2.5 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-lg"
       style={{
         background: 'transparent',
         borderBottom: '1px solid #5A4838',
         borderRadius: 0,
+        transition: 'background-color 0.18s ease, opacity 0.15s ease, transform 0.1s ease',
       }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,105,180,0.05)'; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; }}
+      onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.99)'; }}
+      onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
     >
       {/* Color dot for blob type */}
       <span

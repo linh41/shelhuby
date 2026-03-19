@@ -93,6 +93,7 @@ function DashboardContent() {
 
   return (
     <main
+      id="main-content"
       className="min-h-screen flex flex-col relative overflow-hidden"
       style={{ background: 'var(--page-bg)', padding: 'var(--bento-gap)', gap: 'var(--bento-gap)' }}
     >
@@ -111,8 +112,8 @@ function DashboardContent() {
       >
         <button
           onClick={() => router.push('/')}
-          className="text-xl font-medium tracking-tight shrink-0 transition-opacity hover:opacity-70"
-          style={{ color: 'var(--text-primary)' }}
+          className="text-xl font-medium tracking-tight shrink-0 press-feedback hover:opacity-70"
+          style={{ color: 'var(--text-primary)', transition: 'opacity 0.2s ease, transform 0.1s ease' }}
         >
           Shehuby
         </button>
@@ -145,11 +146,11 @@ function DashboardContent() {
             <button
               key={net}
               onClick={() => handleNetworkChange(net)}
-              className="rounded-xl px-3 text-xs font-medium transition-colors h-full"
+              className="rounded-xl px-3 text-xs font-medium press-feedback h-full"
               style={
                 network === net
-                  ? { background: 'var(--text-primary)', color: 'var(--text-tertiary)' }
-                  : { background: 'transparent', color: 'var(--text-tertiary)' }
+                  ? { background: 'var(--text-primary)', color: 'var(--text-tertiary)', transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.1s ease' }
+                  : { background: 'transparent', color: 'var(--text-tertiary)', transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.1s ease' }
               }
             >
               {net === 'shelbynet' ? 'Shelbynet' : 'Testnet'}
@@ -171,8 +172,8 @@ function DashboardContent() {
           <p className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>
           <button
             onClick={refetch}
-            className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:opacity-80"
-            style={{ border: '1px solid var(--danger)', color: 'var(--danger)' }}
+            className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium press-feedback hover:opacity-80"
+            style={{ border: '1px solid var(--danger)', color: 'var(--danger)', transition: 'opacity 0.2s ease, transform 0.1s ease' }}
           >
             Retry
           </button>
@@ -209,7 +210,7 @@ function DashboardContent() {
       {/* Profile card */}
       {(loading || data) && (
         <div className="relative z-10">
-          <ProfileCard profile={data?.profile ?? null} loading={loading} />
+          <ProfileCard profile={data?.profile ?? null} blobs={data?.blobs ?? []} network={network} loading={loading} />
         </div>
       )}
 

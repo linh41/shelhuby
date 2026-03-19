@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Funnel+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+
 :root {
   /* Shehuby dark brown + pink theme — Shelby Style from .pen design */
   --page-bg: #2D1E14;
@@ -84,9 +85,25 @@ body {
   border-radius: 4px;
 }
 
-/* Hover transition utility */
-.transition-colors {
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+/* Tabular numbers for data displays — prevents layout shift on number updates */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Card hover lift — subtle background change + scale for interactive cards */
+.card-hover {
+  transition: background-color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+.card-hover:hover {
+  background-color: var(--card-elevated);
+}
+
+/* Button press feedback — scale down on click */
+.press-feedback {
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+.press-feedback:active {
+  transform: scale(0.97);
 }
 
 /* Floating card animation */
